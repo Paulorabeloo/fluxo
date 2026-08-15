@@ -1,3 +1,5 @@
+<img width="360" height="787" alt="image" src="https://github.com/user-attachments/assets/e85c91d8-a3a4-4f99-bb10-9556fe09ddef" />
+
 # 💸 Fluxo
 
 **EN** · Personal finance manager with a **Python (FastAPI)** REST API and a **TypeScript (React)** front end. Monthly dashboard, automatic financial-health insights, charts and a full-CRUD statement. [Português abaixo](#-português). 🇧🇷
