@@ -431,8 +431,8 @@ nav.tabs button svg{width:19px; height:19px}
   <div class="sheet">
     <h3>Ajustes</h3>
     <div class="settings-list">
-      <button class="btn" id="btn-csv">Copiar dados como CSV</button>
-      <button class="btn" id="btn-reseed">Importar CSV (backup)</button>
+      <button class="btn" id="btn-csv">Exportar CSV (backup)</button>
+      <button class="btn" id="btn-reseed">Importar CSV</button>
       <button class="btn danger" id="btn-wipe">Apagar todos os lançamentos</button>
       <button class="btn" id="btn-set-close">Fechar</button>
     </div>
@@ -867,20 +867,41 @@ $('tab-extrato').addEventListener('click',()=>showTab('extrato'));
 $('btn-settings').addEventListener('click',()=>$('ov-set').classList.add('open'));
 $('btn-set-close').addEventListener('click',()=>$('ov-set').classList.remove('open'));
 $('ov-set').addEventListener('click',e=>{ if(e.target.id==='ov-set') $('ov-set').classList.remove('open'); });
-$('btn-csv').addEventListener('click',async()=>{
-  const rows=[['data','tipo','grupo','categoria','valor','observacao']];
-  [...state.txs].sort((a,b)=>a.data.localeCompare(b.data))
-    .forEach(t=>rows.push([t.data,t.tipo,t.grupo,t.cat,String(t.valor.toFixed(2)).replace('.',','),t.nota||'']));
-  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
-  try{ await navigator.clipboard.writeText(csv); toast('CSV copiado — cole no Excel/Sheets'); }
-  catch(e){ toast('Não foi possível copiar'); }
-});
-$('btn-reseed').addEventListener('click',async()=>{
-  let text='';
-  try{ text=await navigator.clipboard.readText(); }catch(e){}
-  if(!text||!text.includes(';')) text=prompt('Cole aqui o CSV exportado (botão "Copiar dados como CSV"):')||'';
+function csvModal(mode, csv){
+  const ov=document.createElement('div'); ov.className='overlay open';
+  const isExp = mode==='export';
+  ov.innerHTML='<div class="sheet"><h3>'+(isExp?'Backup CSV':'Importar CSV')+'</h3>'+
+    '<p style="font-size:.78rem;color:var(--muted);margin:6px 0 10px">'+
+    (isExp?'Toque na caixa, selecione tudo e copie. No outro aparelho, use “Importar CSV”.'
+          :'Cole aqui o CSV copiado do outro aparelho e toque em Importar.')+'</p>'+
+    '<textarea id="csv-ta" style="width:100%;height:200px;background:var(--field);color:var(--ink);'+
+    'border:1px solid var(--card-line2);border-radius:12px;padding:10px;font-size:.72rem" '+
+    (isExp?'readonly':'placeholder="data;tipo;grupo;categoria;valor;observacao"')+'></textarea>'+
+    '<div class="actions"><button type="button" class="btn" id="csv-close">Fechar</button>'+
+    '<button type="button" class="btn primary" id="csv-go">'+(isExp?'Copiar':'Importar')+'</button></div></div>';
+  document.body.appendChild(ov);
+  const ta=ov.querySelector('#csv-ta');
+  if(isExp){ ta.value=csv; setTimeout(()=>{ ta.focus(); ta.select(); },80); }
+  ov.querySelector('#csv-close').onclick=()=>ov.remove();
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  ov.querySelector('#csv-go').onclick=async()=>{
+    if(isExp){
+      ta.focus(); ta.select();
+      try{ await navigator.clipboard.writeText(csv); toast('Copiado!'); }
+      catch(e){ try{ document.execCommand('copy'); toast('Copiado!'); }
+        catch(_){ toast('Selecione o texto e copie manualmente'); return; } }
+    } else {
+      const n=importCsvText(ta.value);
+      if(n){ ov.remove(); $('ov-set').classList.remove('open');
+        cur=state.txs.map(t=>t.data.slice(0,7)).sort().pop(); render();
+        toast(n+' lançamentos importados'); }
+      else toast('Nada importado — confira o texto colado');
+    }
+  };
+}
+function importCsvText(text){
   let n=0;
-  text.trim().split(/\r?\n/).forEach(line=>{
+  String(text||'').trim().split(/\r?\n/).forEach(line=>{
     const cols=line.split(';').map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
     if(cols.length<5||cols[0]==='data') return;
     const data=cols[0], tipo=cols[1], grupo=cols[2], cat=cols[3];
@@ -889,10 +910,17 @@ $('btn-reseed').addEventListener('click',async()=>{
     state.txs.push({id:'imp'+Date.now().toString(36)+(n++)+Math.random().toString(36).slice(2,5),
       data,tipo,grupo,cat,valor,nota:cols[5]||''});
   });
-  $('ov-set').classList.remove('open');
-  if(n){ cur=state.txs.map(t=>t.data.slice(0,7)).sort().pop(); render(); toast(n+' lançamentos importados'); }
-  else toast('Nada importado — copie o CSV do outro aparelho primeiro');
+  if(n) save();
+  return n;
+}
+$('btn-csv').addEventListener('click',()=>{
+  const rows=[['data','tipo','grupo','categoria','valor','observacao']];
+  [...state.txs].sort((a,b)=>a.data.localeCompare(b.data))
+    .forEach(t=>rows.push([t.data,t.tipo,t.grupo,t.cat,String(t.valor.toFixed(2)).replace('.',','),t.nota||'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+  csvModal('export', csv);
 });
+$('btn-reseed').addEventListener('click',()=>csvModal('import'));
 $('btn-wipe').addEventListener('click',()=>{
   if(confirm('Apagar todos os lançamentos deste dispositivo?')){
     state.txs=[]; $('ov-set').classList.remove('open'); render(); toast('Tudo apagado');
@@ -905,6 +933,22 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2400);
 }
 
+// importa lançamentos embutidos na URL (#import=base64), usado na migração entre aparelhos
+try{
+  const m=location.hash.match(/import=([A-Za-z0-9+/=_-]+)/);
+  if(m){
+    const rows=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    if(Array.isArray(rows)&&(state.txs.length===0||confirm('Importar '+rows.length+' lançamentos do link?'))){
+      let n=0;
+      rows.forEach(r=>{ if(r&&r.data&&+r.valor>0&&CAT[r.tipo]) state.txs.push({
+        id:'url'+(n++)+Math.random().toString(36).slice(2,6),
+        data:r.data, tipo:r.tipo, grupo:r.grupo, cat:r.cat, valor:+r.valor, nota:r.nota||''});
+      });
+      if(n){ cur=state.txs.map(t=>t.data.slice(0,7)).sort().pop(); save(); toast(n+' lançamentos importados'); }
+    }
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+}catch(e){}
 render();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 </script>
