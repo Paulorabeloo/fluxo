@@ -1,0 +1,17 @@
+{
+  "name": "Fluxo — personal finances",
+  "short_name": "Fluxo",
+  "description": "Personal finance manager: dashboard, analytics and statement. Data stays on your device.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090D",
+  "theme_color": "#07090D",
+  "orientation": "portrait",
+  "lang": "en",
+  "icons": [
+    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

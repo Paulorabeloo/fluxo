@@ -4,7 +4,7 @@
 
 **EN** · Personal finance manager with a **Python (FastAPI)** REST API and a **TypeScript (React)** front end. Monthly dashboard, automatic financial-health insights, charts and a full-CRUD statement. [Português abaixo](#-português). 🇧🇷
 
-**▶ Live demo (PWA):** https://paulorabeloo.github.io/fluxo/ — a standalone single-file build ([`docs/`](docs/)) that runs entirely in the browser with `localStorage`, installable on mobile. No backend required; data never leaves your device.
+**▶ Live demo (PWA):** [English (USD)](https://paulorabeloo.github.io/fluxo/en/) · [Português (BRL)](https://paulorabeloo.github.io/fluxo/) — a standalone single-file build ([`docs/`](docs/)) that runs entirely in the browser with `localStorage`, installable on mobile. No backend required; data never leaves your device.
 
 ## Features
 
@@ -74,7 +74,7 @@ frontend/src/
 
 Gestor de finanças pessoais com API REST em **Python (FastAPI)** e front-end em **TypeScript (React)**. Dashboard mensal, insights automáticos de saúde financeira, gráficos e extrato com CRUD completo.
 
-**▶ Demo ao vivo (PWA):** https://paulorabeloo.github.io/fluxo/ — versão standalone em arquivo único ([`docs/`](docs/)) que roda 100% no navegador com `localStorage`, instalável no celular. Sem backend; os dados não saem do seu aparelho.
+**▶ Demo ao vivo (PWA):** [Português (BRL)](https://paulorabeloo.github.io/fluxo/) · [English (USD)](https://paulorabeloo.github.io/fluxo/en/) — versão standalone em arquivo único ([`docs/`](docs/)) que roda 100% no navegador com `localStorage`, instalável no celular. Sem backend; os dados não saem do seu aparelho.
 
 ### Funcionalidades
 
